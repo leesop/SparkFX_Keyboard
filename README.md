@@ -15,7 +15,7 @@ SparkFX Keyboard is a macOS menu bar app that displays a burst of particles near
 
 - Apple Silicon Mac (arm64), macOS 12 or later. This release does not include an Intel build.
 - Launch at Login requires macOS 13 or later.
-- Download `SparkFX Keyboard-1.0-4.zip` from [Releases](https://github.com/leesop/SparkFX_Keyboard/releases/latest), unzip it, move **SparkFX Keyboard.app** to **Applications**, and open it.
+- Download `SparkFX.Keyboard-1.0-4.zip` from [Releases](https://github.com/leesop/SparkFX_Keyboard/releases/latest), unzip it, move **SparkFX Keyboard.app** to **Applications**, and open it.
 - The app runs in the menu bar and does not show a Dock icon.
 - The release is signed with Developer ID, notarized by Apple, and includes a stapled notarization ticket. Gatekeeper verification passed for this build.
 
@@ -48,7 +48,7 @@ SparkFX Keyboard는 키를 누르면 입력 커서 근처에서, 마우스를 �
 
 - Apple Silicon Mac(arm64), macOS 12 이상이 필요합니다. 이번 릴리스에는 Intel용 빌드가 포함되지 않습니다.
 - 로그인 자동 실행은 macOS 13 이상에서 사용할 수 있습니다.
-- [릴리스](https://github.com/leesop/SparkFX_Keyboard/releases/latest)에서 `SparkFX Keyboard-1.0-4.zip`을 내려받아 압축을 풀고, **SparkFX Keyboard.app**을 **응용 프로그램** 폴더로 옮긴 뒤 실행합니다.
+- [릴리스](https://github.com/leesop/SparkFX_Keyboard/releases/latest)에서 `SparkFX.Keyboard-1.0-4.zip`을 내려받아 압축을 풀고, **SparkFX Keyboard.app**을 **응용 프로그램** 폴더로 옮긴 뒤 실행합니다.
 - 앱은 메뉴 막대에서 실행되며 Dock 아이콘은 표시하지 않습니다.
 - Developer ID 서명, Apple 공증, 공증 티켓 첨부를 완료했으며 해당 빌드의 Gatekeeper 검증을 통과했습니다.
 
