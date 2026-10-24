@@ -121,7 +121,7 @@ struct SoundSetting: Equatable {
 }
 
 enum SoundMode: String, CaseIterable {
-    case off, ambient, custom
+    case off, ambient, custom, pianoGenie, musicRNN, drumsRNN
 
     var titleKey: String { "sound.mode.\(rawValue)" }
 }

@@ -2,18 +2,12 @@ import AppKit
 import UniformTypeIdentifiers
 import ServiceManagement
 
-/// 소리 메뉴 항목이 무슨 일을 할지 담는다.
-private struct SoundCommand {
-    let trigger: Trigger
-    /// 고른 파일. null이면 파일과 무관한 동작(끄기, 고르기, 목록 삭제).
-    let path: String?
-}
-
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let overlay = SparkOverlay()
     private let keyboardSound = SoundPlayer()
     private let mouseSound = SoundPlayer()
     private let ambient = AmbientEngine()
+    private let neural = NeuralMusicEngine()
 
     private var statusItem: NSStatusItem!
     private var keyMonitor: Any?
@@ -21,10 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private var effectCheckItems: [NSMenuItem] = []
     private var effectKindItems: [NSMenuItem] = []
-    private var soundModeItems: [NSMenuItem] = []
-    private var audioMenu: NSMenu!
-    private var audioOptionsItem: NSMenuItem!
-    private var audioOptionsMenu: NSMenu!
+    private var soundOptions: SoundOptionsWindowController?
     private var caretItem: NSMenuItem!
     private var loginItem: NSMenuItem!
     private var permissionItem: NSMenuItem!
@@ -37,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private static let mouseArrowSize = CGSize(width: 16, height: 24)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        neural.onStatusChange = { [weak self] in self?.refreshMenu() }
         statusItem = makeStatusItem()
         startMonitoringInput()
 
@@ -46,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         restoreAmbient()
+        restoreNeural()
 
         if CommandLine.arguments.contains("--diag") {
             runDiagnostics()
@@ -55,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        neural.stop()
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
     }
@@ -86,8 +80,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         let info = Bundle.main.infoDictionary ?? [:]
         let name = info["CFBundleDisplayName"] as? String ?? "SparkFX Keyboard"
-        let version = info["CFBundleShortVersionString"] as? String ?? "1.2"
-        let build = info["CFBundleVersion"] as? String ?? "5"
+        let version = info["CFBundleShortVersionString"] as? String ?? "1.5"
+        let build = info["CFBundleVersion"] as? String ?? "6"
         menu.addItem(label("\(name) \(version) (\(build))"))
         menu.addItem(.separator())
         menu.addItem(makePermissionItem())
@@ -135,104 +129,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func makeAudioItem() -> NSMenuItem {
-        let item = NSMenuItem(title: L("menu.audio"), action: nil, keyEquivalent: "")
-        audioMenu = NSMenu()
-        audioMenu.autoenablesItems = false
-        audioMenu.delegate = self
-        let modeItem = NSMenuItem(title: L("sound.type"), action: nil, keyEquivalent: "")
-        let modes = NSMenu()
-        for mode in SoundMode.allCases {
-            let entry = actionItem(L(mode.titleKey), #selector(selectSoundMode(_:)), value: mode.rawValue)
-            modes.addItem(entry)
-            soundModeItems.append(entry)
-        }
-        modeItem.submenu = modes
-        audioMenu.addItem(modeItem)
-        audioOptionsItem = NSMenuItem(title: L("sound.options"), action: nil, keyEquivalent: "")
-        audioOptionsMenu = NSMenu()
-        audioOptionsMenu.autoenablesItems = false
-        audioOptionsItem.submenu = audioOptionsMenu
-        audioMenu.addItem(audioOptionsItem)
-        item.submenu = audioMenu
-        return item
+        actionItem(L("menu.audio"), #selector(showSoundOptions))
     }
 
-    /// Rebuild the selected mode's options inside a separate submenu.
-    private func rebuildAudioOptions() {
-        audioOptionsMenu.removeAllItems()
-        audioOptionsItem.isEnabled = Prefs.soundMode != .off
-        switch Prefs.soundMode {
-        case .off: break
-        case .ambient: appendAmbientOptions(to: audioOptionsMenu)
-        case .custom:
-            for trigger in Trigger.allCases {
-                if trigger == .mouse { audioOptionsMenu.addItem(.separator()) }
-                audioOptionsMenu.addItem(label(L(trigger.titleKey)))
-                appendSoundOptions(for: trigger, to: audioOptionsMenu)
+    @objc private func showSoundOptions() {
+        if soundOptions == nil {
+            let controller = SoundOptionsWindowController()
+            controller.onAction = { [weak self] action in self?.applySoundOption(action) }
+            soundOptions = controller
+        }
+        soundOptions?.refresh(neuralStatus: neural.status)
+        activateApp()
+        soundOptions?.showWindow(nil)
+        soundOptions?.window?.makeKeyAndOrderFront(nil)
+    }
+
+    private func applySoundOption(_ action: SoundOptionsAction) {
+        switch action {
+        case .mode(let mode): setSoundMode(mode)
+        case .volume(let value):
+            switch Prefs.soundMode {
+            case .off: break
+            case .ambient: Prefs.ambientMaxLevel = value; ambient.setMaxLevel(value)
+            case .custom: Prefs.soundVolume = value
+            case .pianoGenie, .musicRNN, .drumsRNN:
+                var settings = Prefs.neuralSettings(Prefs.soundMode)
+                settings.volume = value
+                applyNeuralSettings(settings)
             }
-            audioOptionsMenu.addItem(.separator())
-            audioOptionsMenu.addItem(label(L("menu.sound.volume")))
-            appendVolumes(to: audioOptionsMenu, ambient: false)
-        }
-    }
-
-    private func appendSoundOptions(for trigger: Trigger, to menu: NSMenu) {
-        let setting = Prefs.sound(trigger)
-        menu.addItem(actionItem(L("menu.sound.none"), #selector(selectSoundOff(_:)),
-                                value: SoundCommand(trigger: trigger, path: nil),
-                                checked: setting.activePath == nil))
-        let recent = Prefs.recentSounds(trigger)
-        if !recent.isEmpty {
-            menu.addItem(.separator())
-            for path in recent {
-                let entry = actionItem(SoundSetting.displayName(forPath: path), #selector(selectRecentSound(_:)),
-                                       value: SoundCommand(trigger: trigger, path: path),
-                                       checked: setting.activePath == path)
-                entry.toolTip = path
-                menu.addItem(entry)
+        case .ambientVoice(let voice): applyAmbientVoice(voice)
+        case .chooseLoop: chooseAmbientLoop()
+        case .ambientEffect(let effect, let enabled):
+            switch effect {
+            case .grains: Prefs.ambientGrains = enabled; ambient.setGrainsEnabled(enabled)
+            case .chimes: Prefs.ambientChimes = enabled; ambient.setChimesEnabled(enabled)
+            case .guitar: Prefs.ambientGuitar = enabled; ambient.setGuitarEnabled(enabled)
+            case .electronic: Prefs.ambientElectronic = enabled; ambient.setElectronicEnabled(enabled)
+            case .beat: Prefs.ambientBPM = enabled ? 90 : 0; ambient.setPulseBPM(Prefs.ambientBPM)
             }
+        case .soundEnabled(let trigger, let enabled):
+            if enabled {
+                if let path = Prefs.sound(trigger).path { applySound(trigger: trigger, path: path) }
+                else { chooseSound(for: trigger) }
+            } else {
+                var setting = Prefs.sound(trigger); setting.isEnabled = false
+                Prefs.setSound(trigger, setting)
+            }
+        case .soundPath(let trigger, let path): applySound(trigger: trigger, path: path)
+        case .chooseSound(let trigger): chooseSound(for: trigger)
+        case .clearSounds(let trigger):
+            Prefs.clearRecentSounds(trigger)
+            var setting = Prefs.sound(trigger); setting.isEnabled = false
+            Prefs.setSound(trigger, setting)
+        case .neural(let settings): applyNeuralSettings(settings)
+        case .retryNeural: restoreNeural()
         }
-        menu.addItem(.separator())
-        menu.addItem(actionItem(L("menu.sound.choose"), #selector(chooseSound(_:)),
-                                value: SoundCommand(trigger: trigger, path: nil)))
-        let clear = actionItem(L("menu.sound.clear"), #selector(clearSoundList(_:)),
-                               value: SoundCommand(trigger: trigger, path: nil))
-        clear.isEnabled = !recent.isEmpty
-        menu.addItem(clear)
+        refreshMenu()
     }
 
-    private func appendAmbientOptions(to menu: NSMenu) {
-        let voice = Prefs.ambientVoice
-        menu.addItem(label(L("ambient.loopSettings")))
-        for builtIn in AmbientVoice.builtIn {
-            menu.addItem(actionItem(L("ambient.\(builtIn.storedValue)"), #selector(selectAmbientVoice(_:)),
-                                    value: builtIn.storedValue, checked: voice == builtIn))
-        }
-        let loop = actionItem(L("ambient.loop"), #selector(chooseAmbientLoop(_:)))
-        if case .loop(let path) = voice {
-            loop.state = .on
-            loop.toolTip = path
-        }
-        menu.addItem(loop)
-        menu.addItem(.separator())
-        menu.addItem(label(L("ambient.keyEffects")))
-        menu.addItem(actionItem(L("ambient.grains"), #selector(toggleAmbientGrains), checked: Prefs.ambientGrains))
-        menu.addItem(actionItem(L("ambient.chimes"), #selector(toggleAmbientChimes), checked: Prefs.ambientChimes))
-        menu.addItem(actionItem(L("ambient.guitar"), #selector(toggleAmbientGuitar), checked: Prefs.ambientGuitar))
-        menu.addItem(actionItem(L("ambient.electronic"), #selector(toggleAmbientElectronic), checked: Prefs.ambientElectronic))
-        menu.addItem(actionItem(L("ambient.beat"), #selector(toggleAmbientPulse), checked: Prefs.ambientBPM > 0))
-        menu.addItem(.separator())
-        menu.addItem(label(L("ambient.volume")))
-        appendVolumes(to: menu, ambient: true)
+    private func applyNeuralSettings(_ settings: NeuralSettings) {
+        guard Prefs.soundMode.isNeural else { return }
+        Prefs.setNeuralSettings(settings, for: Prefs.soundMode)
+        neural.configure(mode: Prefs.soundMode, settings: settings)
     }
 
-    private func appendVolumes(to menu: NSMenu, ambient: Bool) {
-        let selected = ambient ? Prefs.ambientMaxLevel : Prefs.soundVolume
-        for volume in Prefs.volumeOptions {
-            menu.addItem(actionItem("\(Int(volume * 100))%",
-                                    ambient ? #selector(selectAmbientLevel(_:)) : #selector(selectVolume(_:)),
-                                    value: Double(volume), checked: abs(selected - volume) < 0.001))
-        }
+    private func restoreNeural() {
+        neural.configure(mode: Prefs.soundMode.isNeural ? Prefs.soundMode : nil,
+                         settings: Prefs.neuralSettings(Prefs.soundMode))
     }
 
     private func makeOtherItem() -> NSMenuItem {
@@ -316,10 +279,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for item in effectCheckItems {
             item.state = item.representedObject as? String == Prefs.effectSize.rawValue ? .on : .off
         }
-        for item in soundModeItems {
-            item.state = item.representedObject as? String == Prefs.soundMode.rawValue ? .on : .off
-        }
-        rebuildAudioOptions()
+        soundOptions?.refresh(neuralStatus: neural.status)
         caretItem.state = Prefs.accurateCaret ? .on : .off
         refreshLoginItem()
         refreshPermissionItems(accessibility: CaretLocator.isTrusted,
@@ -332,76 +292,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         inputMonitoringStatusItem.state = inputMonitoring ? .on : .off
     }
 
-    @objc private func selectSoundMode(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String, let mode = SoundMode(rawValue: raw) else { return }
+    private func setSoundMode(_ mode: SoundMode) {
         Prefs.soundMode = mode
-        // Load the loop only when its mode is used, and stop ambient output in other modes.
         if mode == .ambient { restoreAmbient() }
         else { ambient.setEnabled(false) }
+        restoreNeural()
+        refreshMenu()
     }
 
-    @objc private func selectAmbientVoice(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String else { return }
-        guard let voice = AmbientVoice.builtIn.first(where: { $0.storedValue == raw }) else { return }
-        applyAmbientVoice(voice)
-    }
-
-    @objc private func chooseAmbientLoop(_ sender: NSMenuItem) {
-        activateApp()
+    private func chooseAmbientLoop() {
         let panel = NSOpenPanel()
         panel.message = L("ambient.loop")
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
         panel.allowedContentTypes = [.audio]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        guard ambient.loadLoop(url: url) else {
-            let alert = NSAlert()
-            alert.messageText = L("alert.loop.title")
-            alert.informativeText = L("alert.loop.body", url.lastPathComponent)
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: L("alert.sound.ok"))
-            activateApp()
-            alert.runModal()
-            return
+        presentSoundPanel(panel) { [weak self] url in
+            guard let self, let url else { return }
+            guard self.ambient.loadLoop(url: url) else {
+                self.showSoundError(title: L("alert.loop.title"), body: L("alert.loop.body", url.lastPathComponent))
+                return
+            }
+            self.applyAmbientVoice(.loop(url.path))
         }
-        applyAmbientVoice(.loop(url.path))
     }
 
     private func applyAmbientVoice(_ voice: AmbientVoice) {
         ambient.setVoice(voice)
         Prefs.ambientVoice = voice
-    }
-
-    @objc private func toggleAmbientGrains() {
-        Prefs.ambientGrains.toggle()
-        ambient.setGrainsEnabled(Prefs.ambientGrains)
-    }
-
-    @objc private func toggleAmbientChimes() {
-        Prefs.ambientChimes.toggle()
-        ambient.setChimesEnabled(Prefs.ambientChimes)
-    }
-
-    @objc private func toggleAmbientGuitar() {
-        Prefs.ambientGuitar.toggle()
-        ambient.setGuitarEnabled(Prefs.ambientGuitar)
-    }
-
-    @objc private func toggleAmbientElectronic() {
-        Prefs.ambientElectronic.toggle()
-        ambient.setElectronicEnabled(Prefs.ambientElectronic)
-    }
-
-    @objc private func toggleAmbientPulse() {
-        Prefs.ambientBPM = Prefs.ambientBPM > 0 ? 0 : 90
-        ambient.setPulseBPM(Prefs.ambientBPM)
-    }
-
-    @objc private func selectAmbientLevel(_ sender: NSMenuItem) {
-        guard let value = sender.representedObject as? Double else { return }
-        Prefs.ambientMaxLevel = Float(value)
-        ambient.setMaxLevel(Float(value))
     }
 
     // MARK: - 메뉴 동작
@@ -420,45 +335,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlay.apply(size: size)
     }
 
-    @objc private func selectSoundOff(_ sender: NSMenuItem) {
-        guard let command = soundCommand(from: sender) else { return }
-        var setting = Prefs.sound(command.trigger)
-        setting.isEnabled = false
-        Prefs.setSound(command.trigger, setting)
-    }
-
-    /// 목록에서 고른 소리를 바로 쓴다. 고른 것이 맨 앞으로 올라온다.
-    @objc private func selectRecentSound(_ sender: NSMenuItem) {
-        guard let command = soundCommand(from: sender), let path = command.path else { return }
-        applySound(trigger: command.trigger, path: path)
-    }
-
-    @objc private func chooseSound(_ sender: NSMenuItem) {
-        guard let command = soundCommand(from: sender) else { return }
-        activateApp()
-
+    private func chooseSound(for trigger: Trigger) {
         let panel = NSOpenPanel()
         panel.message = L("menu.sound.choose")
+        panel.allowedContentTypes = [.audio, .yaml]
+        presentSoundPanel(panel) { [weak self] url in
+            guard let self, let url else { return }
+            self.applySound(trigger: trigger, path: url.path)
+        }
+    }
+
+    private func presentSoundPanel(_ panel: NSOpenPanel, completion: @escaping (URL?) -> Void) {
+        activateApp()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.audio, .yaml]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        applySound(trigger: command.trigger, path: url.path)
+        let finish: (NSApplication.ModalResponse) -> Void = { [weak self, weak panel] response in
+            completion(response == .OK ? panel?.url : nil)
+            self?.refreshMenu()
+        }
+        if let window = soundOptions?.window, window.isVisible {
+            panel.beginSheetModal(for: window, completionHandler: finish)
+        } else { finish(panel.runModal()) }
     }
 
-    /// 잘못 고른 소리를 지울 수 있도록 목록을 비운다. 고른 소리도 함께 지운다.
-    @objc private func clearSoundList(_ sender: NSMenuItem) {
-        guard let command = soundCommand(from: sender) else { return }
-        Prefs.clearRecentSounds(command.trigger)
-        var setting = Prefs.sound(command.trigger)
-        setting.isEnabled = false
-        Prefs.setSound(command.trigger, setting)
-    }
-
-    @objc private func selectVolume(_ sender: NSMenuItem) {
-        guard let value = sender.representedObject as? Double else { return }
-        Prefs.soundVolume = Float(value)
+    private func showSoundError(title: String, body: String) {
+        let alert = NSAlert()
+        alert.messageText = title; alert.informativeText = body
+        alert.alertStyle = .warning; alert.addButton(withTitle: L("alert.sound.ok"))
+        activateApp()
+        if let window = soundOptions?.window, window.isVisible { alert.beginSheetModal(for: window) }
+        else { alert.runModal() }
     }
 
     @objc private func openPermissionSettings() {
@@ -510,8 +417,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         NSApp.orderFrontStandardAboutPanel(options: [
             .applicationName: "SparkFX Keyboard",
-            .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.2",
-            .version: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "5",
+            .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.5",
+            .version: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "6",
             .credits: credits,
         ])
     }
@@ -539,6 +446,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func handleMouseDown(type: NSEvent.EventType) {
         ambient.noteInput()
+        if Prefs.soundMode.isNeural {
+            neural.noteInput(button: type == .rightMouseDown ? 5 : 3, mouse: true)
+        }
         if let player = preparedSound(for: .mouse), let button = KeyNames.buttonName(for: type) {
             player.play(button: button)
             ambient.noteSoundPlayed()
@@ -548,6 +458,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func handleKeyPress(keyCode: UInt16) {
         ambient.noteInput()
+        if Prefs.soundMode.isNeural { neural.noteInput(button: Int(keyCode % 8), mouse: false) }
         // 소리는 커서 조회를 기다리지 않고 바로 낸다.
         if let player = preparedSound(for: .keyboard) {
             player.play(keyCode: keyCode)
@@ -609,23 +520,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // 못 읽는 파일은 목록에서 지워 다시 고르게 한다.
             Prefs.removeRecentSound(trigger, path: path)
 
-            let alert = NSAlert()
-            alert.messageText = L("alert.sound.title")
-            alert.informativeText = L("alert.sound.body", URL(fileURLWithPath: path).lastPathComponent)
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: L("alert.sound.ok"))
-            activateApp()
-            alert.runModal()
+            showSoundError(title: L("alert.sound.title"),
+                           body: L("alert.sound.body", URL(fileURLWithPath: path).lastPathComponent))
             return
         }
         Prefs.setSound(trigger, SoundSetting(path: path, isEnabled: true))
         Prefs.noteUsedSound(trigger, path: path)
         // 고른 소리를 바로 들려준다.
-        soundPlayer(for: trigger).preview()
-    }
-
-    private func soundCommand(from item: NSMenuItem) -> SoundCommand? {
-        item.representedObject as? SoundCommand
+        if Prefs.soundMode == .custom { soundPlayer(for: trigger).preview() }
     }
 
     // MARK: - 권한

@@ -19,16 +19,18 @@ swiftc -O -swift-version 5 \
 "$BUILD/icongen" "$BUILD/AppIcon.iconset"
 iconutil -c icns "$BUILD/AppIcon.iconset" -o "$CONTENTS/Resources/AppIcon.icns"
 
-echo "==> 2/5 번역 리소스 복사"
+echo "==> 2/5 번역 및 AI 모델 리소스 복사"
 for lproj in "$ROOT/Resources/"*.lproj; do
   [ -d "$lproj" ] || continue
   cp -R "$lproj" "$CONTENTS/Resources/"
 done
+(cd "$ROOT/Resources/Models" && shasum -a 256 -c SHA256SUMS)
+cp -R "$ROOT/Resources/Models" "$CONTENTS/Resources/"
 
 echo "==> 3/5 컴파일"
 swiftc -O -swift-version 5 -target "$(uname -m)-apple-macosx12.0" -whole-module-optimization \
   "$ROOT/Sources/"*.swift \
-  -framework AppKit -framework QuartzCore -framework ApplicationServices -framework IOKit -framework AVFoundation -framework ServiceManagement \
+  -framework AppKit -framework QuartzCore -framework ApplicationServices -framework IOKit -framework AVFoundation -framework ServiceManagement -framework AudioToolbox -framework Accelerate \
   -o "$CONTENTS/MacOS/SparkFX Keyboard"
 
 echo "==> 4/5 Info.plist"
@@ -54,9 +56,9 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.2</string>
+	<string>1.5</string>
 	<key>CFBundleVersion</key>
-	<string>5</string>
+	<string>6</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>12.0</string>
 	<key>LSUIElement</key>

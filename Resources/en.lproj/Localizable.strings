@@ -49,7 +49,7 @@
 "menu.about" = "About";
 "menu.quit" = "Quit";
 
-"about.credits" = "A menu bar app that shows fireworks or water ripples where you type or click.";
+"about.credits" = "A menu bar app that shows fireworks or water ripples where you type or click.\n\nPiano Genie · MusicRNN: Google Magenta (Apache 2.0).";
 
 "alert.permission.title" = "Turn on: %@";
 "alert.permission.body" = "Two permissions are needed to set off fireworks where you type.\n\n· Accessibility - used to find the text caret.\n· Input Monitoring - used to observe keystrokes.\n\nIn System Settings > Privacy & Security, both lists must contain SparkFX Keyboard turned on.\nIf SparkFX Keyboard is not listed, add build/SparkFX Keyboard.app with the + button.\nRestart the app after turning them on.\n\nYou can check again any time from the \"App Permissions\" menu.\nMouse clicks work without these permissions.";
@@ -75,7 +75,7 @@
 
 "sound.mode.custom" = "Custom Sound Mode";
 
-"sound.options" = "Sound Options";
+"sound.options" = "Sound Options…";
 
 "ambient.loopSettings" = "Loop Effects";
 
@@ -112,3 +112,69 @@
 "ambient.guitar" = "Electric Guitar";
 
 "ambient.electronic" = "Electronic Tones";
+
+/* AI music */
+"sound.mode.pianoGenie" = "Piano Genie";
+"sound.mode.musicRNN" = "MusicRNN";
+"neural.instrument" = "Instrument";
+"neural.instrument.automatic" = "Automatic (changes about every 4 minutes)";
+"neural.instrument.piano" = "Piano";
+"neural.instrument.electricPiano" = "Electric Piano";
+"neural.instrument.musicBox" = "Music Box";
+"neural.instrument.guitar" = "Acoustic Guitar";
+"neural.instrument.strings" = "Strings";
+"neural.instrument.lead" = "Synth Lead";
+"neural.register" = "Register";
+"neural.register.low" = "Low";
+"neural.register.middle" = "Middle";
+"neural.register.high" = "High";
+"neural.variation" = "Variation";
+"neural.variation.calm" = "Restrained";
+"neural.variation.balanced" = "Balanced";
+"neural.variation.adventurous" = "Adventurous";
+"neural.arrangement" = "Arrangement Style";
+"neural.arrangement.gentle" = "Gentle";
+"neural.arrangement.pop" = "Pop";
+"neural.arrangement.electronic" = "Electronic";
+"neural.tempo" = "Tempo";
+"neural.accompaniment" = "Automatic Accompaniment";
+"neural.continuation" = "Continue After Input (about 15 seconds)";
+"neural.loading" = "Preparing to Play…";
+"neural.failed" = "Could Not Prepare Playback";
+"neural.retry" = "Try Again";
+"neural.error.resources" = "AI model files are missing. Please rebuild the app.";
+"neural.error.weights" = "AI model files are invalid.";
+"neural.error.audio" = "Could not start the macOS instrument.";
+
+/* Independent sound options window */
+"options.title" = "Sound Options";
+"options.autosave" = "Changes take effect immediately and are saved automatically.";
+"options.close" = "Close";
+"options.off" = "Sound is off. Choose a sound type above to adjust its options.";
+"options.loop" = "Loop Type";
+"options.file" = "Sound File";
+"options.soundEnabled" = "Enable This Sound";
+"options.noFile" = "No sound file selected.";
+"options.performance" = "Performance";
+"options.pianoDescription" = "Creates a melody with each keystroke or click. Try different instruments and registers.";
+"options.rnnDescription" = "Continues a melody as you type or click. Adjust the arrangement style and tempo.";
+"options.ready" = "Type or click in another app to start playing.";
+
+/* Additional instruments and drums */
+"neural.instrument.vibraphone" = "Vibraphone";
+"neural.instrument.organ" = "Organ";
+"neural.instrument.saxophone" = "Saxophone";
+"neural.instrument.flute" = "Flute";
+"sound.mode.drumsRNN" = "Drums Only";
+"options.drumsDescription" = "Plays only drums, varying the rhythm as you type. Tempo follows your input speed and changes gradually at bar boundaries.";
+"drums.rhythm" = "Rhythm";
+"drums.style" = "Rhythm Style";
+"drums.style.rock" = "Rock";
+"drums.style.dance" = "Dance";
+"drums.style.halftime" = "Half-Time";
+"drums.baseTempo" = "Base Tempo";
+"drums.followTempo" = "Follow Input Tempo";
+"drums.density" = "Rhythm Density";
+"drums.density.sparse" = "Sparse";
+"drums.density.balanced" = "Balanced";
+"drums.density.busy" = "Busy";

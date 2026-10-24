@@ -49,7 +49,7 @@
 "menu.about" = "정보";
 "menu.quit" = "끝내기";
 
-"about.credits" = "키를 누르거나 마우스를 클릭할 때 그 자리에서 불꽃이나 물방울 효과가 나타나는 메뉴 막대 앱입니다.";
+"about.credits" = "키를 누르거나 마우스를 클릭할 때 그 자리에서 불꽃이나 물방울 효과가 나타나는 메뉴 막대 앱입니다.\n\nPiano Genie · MusicRNN: Google Magenta (Apache 2.0).";
 
 "alert.permission.title" = "권한을 켜 주세요: %@";
 "alert.permission.body" = "키를 누른 자리에 불꽃을 터뜨리려면 두 가지가 필요합니다.\n\n· 손쉬운 접근 - 입력 커서의 위치를 알아내는 데 씁니다.\n· 입력 모니터링 - 키 입력을 관찰하는 데 씁니다.\n\n시스템 설정 > 개인정보 보호 및 보안에서 두 목록 모두에 SparkFX Keyboard가 켜져 있어야 합니다.\n목록에 SparkFX Keyboard가 없으면 + 단추로 build/SparkFX Keyboard.app을 직접 추가하세요.\n권한을 켠 뒤에는 앱을 다시 실행해야 합니다.\n\n언제든 메뉴 막대의 '앱 사용 권한 설정' 메뉴에서 다시 확인할 수 있습니다.\n마우스 클릭은 이 권한 없이도 동작합니다.";
@@ -75,7 +75,7 @@
 
 "sound.mode.custom" = "사운드 지정 모드";
 
-"sound.options" = "음향 옵션";
+"sound.options" = "음향 옵션…";
 
 "ambient.loopSettings" = "루프 효과";
 
@@ -112,3 +112,69 @@
 "ambient.guitar" = "일렉기타";
 
 "ambient.electronic" = "전자음";
+
+/* AI music */
+"sound.mode.pianoGenie" = "Piano Genie";
+"sound.mode.musicRNN" = "MusicRNN";
+"neural.instrument" = "기본 악기";
+"neural.instrument.automatic" = "자동 (약 4분마다 변경)";
+"neural.instrument.piano" = "피아노";
+"neural.instrument.electricPiano" = "일렉트릭 피아노";
+"neural.instrument.musicBox" = "오르골";
+"neural.instrument.guitar" = "어쿠스틱 기타";
+"neural.instrument.strings" = "스트링";
+"neural.instrument.lead" = "신스 리드";
+"neural.register" = "음역";
+"neural.register.low" = "낮게";
+"neural.register.middle" = "보통";
+"neural.register.high" = "높게";
+"neural.variation" = "변주";
+"neural.variation.calm" = "안정적으로";
+"neural.variation.balanced" = "균형 있게";
+"neural.variation.adventurous" = "자유롭게";
+"neural.arrangement" = "반주 스타일";
+"neural.arrangement.gentle" = "잔잔하게";
+"neural.arrangement.pop" = "팝";
+"neural.arrangement.electronic" = "일렉트로닉";
+"neural.tempo" = "템포";
+"neural.accompaniment" = "자동 반주";
+"neural.continuation" = "입력 후 이어 연주 (약 15초)";
+"neural.loading" = "연주 준비 중…";
+"neural.failed" = "연주를 준비하지 못했습니다";
+"neural.retry" = "다시 준비";
+"neural.error.resources" = "AI 모델 파일을 찾을 수 없습니다. 앱을 다시 빌드해 주세요.";
+"neural.error.weights" = "AI 모델 파일이 올바르지 않습니다.";
+"neural.error.audio" = "macOS 기본 악기를 시작하지 못했습니다.";
+
+/* Independent sound options window */
+"options.title" = "음향 옵션";
+"options.autosave" = "변경 사항은 즉시 반영되며 자동으로 저장됩니다.";
+"options.close" = "닫기";
+"options.off" = "음향이 꺼져 있습니다. 위에서 음향 종류를 선택하면 해당 옵션을 조절할 수 있습니다.";
+"options.loop" = "루프 종류";
+"options.file" = "소리 파일";
+"options.soundEnabled" = "이 소리 사용";
+"options.noFile" = "선택한 소리 파일이 없습니다.";
+"options.performance" = "연주 설정";
+"options.pianoDescription" = "타이핑과 클릭마다 멜로디를 만듭니다. 악기와 음역을 바꾸어 연주를 비교해 보세요.";
+"options.rnnDescription" = "입력 활동에 맞춰 멜로디가 이어집니다. 반주 스타일과 템포를 조절할 수 있습니다.";
+"options.ready" = "타이핑하거나 다른 앱에서 클릭하면 연주가 시작됩니다.";
+
+/* Additional instruments and drums */
+"neural.instrument.vibraphone" = "비브라폰";
+"neural.instrument.organ" = "오르간";
+"neural.instrument.saxophone" = "색소폰";
+"neural.instrument.flute" = "플루트";
+"sound.mode.drumsRNN" = "드럼 전용";
+"options.drumsDescription" = "드럼만 연주합니다. 타이핑 속도를 따라 템포를 조절하고 리듬을 변주합니다. 템포 변화는 마디마다 부드럽게 반영됩니다.";
+"drums.rhythm" = "리듬 설정";
+"drums.style" = "리듬 스타일";
+"drums.style.rock" = "록";
+"drums.style.dance" = "댄스";
+"drums.style.halftime" = "하프타임";
+"drums.baseTempo" = "기준 템포";
+"drums.followTempo" = "입력 템포 따라가기";
+"drums.density" = "리듬 밀도";
+"drums.density.sparse" = "단순하게";
+"drums.density.balanced" = "보통";
+"drums.density.busy" = "풍성하게";

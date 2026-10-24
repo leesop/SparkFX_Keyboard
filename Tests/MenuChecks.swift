@@ -53,7 +53,7 @@ extension AppDelegate {
         defer { NSStatusBar.system.removeStatusItem(status) }
         let root = status.menu!
         try check(root.numberOfItems == 9, "Top-level menu count")
-        try check(!root.items[0].isEnabled && root.items[0].title.contains("1.2"), "App/version label")
+        try check(!root.items[0].isEnabled && root.items[0].title.contains("1.5") && root.items[0].title.contains("(6)"), "App/version label")
         let expected = ["menu.permission", "menu.effect", "menu.audio", "menu.other"]
         for (index, key) in expected.enumerated() {
             try check(root.items[index + 2].title == L(key), "Top-level order: \(key)")
@@ -89,86 +89,80 @@ extension AppDelegate {
         try check(Prefs.visualEffect == .none && Prefs.effectSize == .small, "Size while off stays off")
         app.selectVisualEffect(kinds.items[1])
         try check(Prefs.visualEffect == .fireworks, "Can return to existing fireworks")
-        try check(app.audioMenu.numberOfItems == 2 && !app.audioMenu.items[1].isEnabled, "None mode disables options submenu")
-        let options = app.audioMenu.items[0].submenu!
-        try check(options.items.map(\.title) == SoundMode.allCases.map { L($0.titleKey) }, "Sound mode choices")
-
+        let audioItem = root.items[4]
+        try check(audioItem.submenu == nil && audioItem.action != nil && audioItem.isEnabled,
+                  "Top-level Sound Settings directly opens a window")
         // Prepare offline audio before exercising mode changes. Never play through speakers.
         let graph = app.ambient.audioGraph
         let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)!
         try graph.enableManualRenderingMode(.offline, format: format, maximumFrameCount: 4096)
-        app.selectSoundMode(options.items[1])
-        app.refreshMenu()
-        try check(app.ambient.isEnabled && Prefs.soundMode == .ambient, "Ambient mode routing")
-        try check(app.audioMenu.items.map(\.title) == [L("sound.type"), L("sound.options")],
-                  "Sound settings contain type and options submenus only")
-        try check(app.audioOptionsItem.isEnabled && app.audioOptionsItem.submenu === app.audioOptionsMenu,
-                  "Enabled options live one level deeper")
-        let titles = app.audioOptionsMenu.items.map(\.title)
-        let ambientExpected = [
-            L("ambient.loopSettings"),
-            L("ambient.wind"), L("ambient.pad"), L("ambient.metal"), L("ambient.edm"), L("ambient.loop"), "",
-            L("ambient.keyEffects"), L("ambient.grains"), L("ambient.chimes"), L("ambient.guitar"), L("ambient.electronic"), L("ambient.beat"), "",
-            L("ambient.volume"), "25%", "50%", "75%", "100%"
-        ]
-        try check(titles == ambientExpected, "Ambient section order/depth")
-        try check(app.audioOptionsMenu.items[2].state == .on && app.audioOptionsMenu.items[16].state == .on, "Ambient defaults checked")
-        for index in [0, 7, 14] {
-            try check(!app.audioOptionsMenu.items[index].isEnabled, "Ambient labels disabled")
+        let controller = SoundOptionsWindowController(rememberFrame: false)
+        controller.onAction = { [weak app] action in app?.applySoundOption(action) }
+        app.soundOptions = controller
+        try check(NSApp.sendAction(audioItem.action!, to: audioItem.target, from: audioItem), "Direct sound settings action opens window")
+        try check((controller.control("mode") as! NSPopUpButton).itemTitles == SoundMode.allCases.map { L($0.titleKey) },
+                  "All sound types are chosen inside the window")
+        defer { controller.close(); app.neural.stop(); app.neural.synchronize() }
+        let originalWindow = controller.window
+        try check(originalWindow?.isVisible == true, "Options opens as an independent nonmodal window")
+        app.showSoundOptions()
+        try check(controller.window === originalWindow && app.soundOptions === controller, "Repeated opens reuse one window")
+        let volume = controller.control("volume") as! NSSegmentedControl
+        try check(!volume.isEnabled && controller.control("ambient.voice") == nil, "Off state has no stale controls")
+
+        try selectOption(controller, "mode", index: 1)
+        try check(app.ambient.isEnabled && Prefs.soundMode == .ambient, "Window mode selector reaches engine")
+        try check(controller.control("ambient.voice") != nil && volume.isEnabled && volume.selectedSegment == 1,
+                  "Ambient controls and default volume")
+        for (index, raw) in [(2, "metal"), (3, "edm")] {
+            try selectOption(controller, "ambient.voice", index: index)
+            try check(Prefs.ambientVoice.storedValue == raw && app.ambient.voice.storedValue == raw,
+                      "Loop control updates stored choice and engine")
         }
-        for raw in ["metal", "edm"] {
-            let item = app.audioOptionsMenu.items.first { $0.representedObject as? String == raw }!
-            app.selectAmbientVoice(item)
-            app.refreshMenu()
-            try check(Prefs.ambientVoice.storedValue == raw && app.ambient.voice.storedValue == raw, "New loop action")
-            try check(app.audioOptionsMenu.items.first { $0.representedObject as? String == raw }!.state == .on, "New loop checkmark")
+        for effect in AmbientKeyEffect.allCases {
+            try setOption(controller, "ambient.\(effect.rawValue)", enabled: true)
+            try check(effect.enabled, "Ambient effect checkbox applies")
         }
-        app.toggleAmbientGuitar()
-        app.toggleAmbientElectronic()
-        app.refreshMenu()
-        try check(Prefs.ambientGuitar && Prefs.ambientElectronic && app.ambient.guitarEnabled && app.ambient.electronicEnabled,
-                  "New key toggles are independent and reach the audio engine")
-        for key in ["ambient.guitar", "ambient.electronic"] {
-            try check(app.audioOptionsMenu.items.first { $0.title == L(key) }!.state == .on, "New key checkmark")
-        }
-        app.toggleAmbientGuitar()
-        try check(!Prefs.ambientGuitar && Prefs.ambientElectronic, "Disabling guitar leaves electronic enabled")
-        // Reapply through mode entry to check restoration, including disabled keys.
+        try check(app.ambient.grainsEnabled && app.ambient.chimesEnabled && app.ambient.guitarEnabled &&
+                  app.ambient.electronicEnabled && app.ambient.pulseBPM == 90, "All key effects reach engine")
+        try setOption(controller, "ambient.guitar", enabled: false)
+        try check(!Prefs.ambientGuitar && Prefs.ambientElectronic, "Key effects stay independent")
+        try setVolumeOption(controller, index: 2)
+        try check(Prefs.ambientMaxLevel == 0.75 && app.ambient.maxLevel == 0.75, "Window volume reaches ambient output")
         app.restoreAmbient()
-        try check(!app.ambient.guitarEnabled && app.ambient.electronicEnabled && app.ambient.voice == .edm, "Restore new sound settings")
-        app.toggleAmbientElectronic()
-        app.toggleAmbientPulse()
-        try check(Prefs.ambientBPM == 90 && app.ambient.pulseBPM == 90, "Beat toggles on at 90")
-        app.toggleAmbientPulse()
-        try check(Prefs.ambientBPM == 0 && app.ambient.pulseBPM == 0, "Beat toggles off")
+        try check(!app.ambient.guitarEnabled && app.ambient.electronicEnabled && app.ambient.voice == .edm,
+                  "Ambient settings restore after reopening")
+        try saveOptionsSnapshot(controller, mode: "ambient")
 
         Prefs.setSound(.keyboard, SoundSetting(path: "/tmp/remembered.wav", isEnabled: true))
         Prefs.noteUsedSound(.keyboard, path: "/tmp/remembered.wav")
         try check(app.preparedSound(for: .keyboard) == nil, "Ambient mode blocks custom sounds")
-        app.selectSoundMode(options.items[2])
-        app.refreshMenu()
+        app.setSoundMode(.custom) // Backend mode changes also refresh the window.
         try check(!app.ambient.isEnabled && Prefs.soundMode == .custom, "Custom mode disables ambient")
-        let custom = app.audioOptionsMenu.items
-        let keyboard = custom.firstIndex { $0.title == L("menu.sound.keyboard") }!
-        let mouse = custom.firstIndex { $0.title == L("menu.sound.mouse") }!
-        try check(keyboard < mouse && !custom[keyboard].isEnabled && !custom[mouse].isEnabled, "Sound section labels")
-        try check(custom.allSatisfy { $0.submenu == nil }, "Sound options are flat")
-        try check(custom.contains { $0.title == "remembered.wav" && $0.state == .on }, "Recent sound checked")
-        try check(custom.suffix(4).map(\.title) == ["25%", "50%", "75%", "100%"], "Custom volume choices")
-        app.selectSoundOff(custom[keyboard + 1])
-        try check(Prefs.sound(.keyboard).activePath == nil && Prefs.sound(.keyboard).path != nil, "Off preserves chosen path")
-        app.selectVolume(custom.last!)
+        try check((controller.control("mode") as! NSPopUpButton).indexOfSelectedItem == 2,
+                  "Mode and window stay synchronized")
+        let source = controller.control("keyboard.source") as! NSPopUpButton
+        try check(source.selectedItem?.representedObject as? String == "/tmp/remembered.wav", "Remembered sound appears")
+        try check(controller.control("mouse.choose") != nil && controller.control("ambient.voice") == nil,
+                  "Only custom controls are visible")
+        try setOption(controller, "keyboard.enabled", enabled: false)
+        try check(Prefs.sound(.keyboard).activePath == nil && Prefs.sound(.keyboard).path != nil, "Disable preserves chosen path")
+        try setVolumeOption(controller, index: 3)
         try check(Prefs.soundVolume == 1, "Custom volume action")
-        app.selectSoundMode(options.items[0])
-        app.refreshMenu()
+        try saveOptionsSnapshot(controller, mode: "custom")
+        try app.checkNeuralWindow(controller)
+        app.setSoundMode(.off); app.neural.synchronize()
         try check(!app.ambient.isEnabled && app.preparedSound(for: .keyboard) == nil, "None is silent")
-        try check(!app.audioOptionsItem.isEnabled && app.audioOptionsMenu.numberOfItems == 0,
-                  "Returning to None clears stale options and disables submenu")
+        try check(!volume.isEnabled && controller.control("neural.instrument") == nil, "None clears model-specific controls")
         try check(Prefs.sound(.keyboard).path == "/tmp/remembered.wav", "Mode changes preserve files")
+        controller.close()
+        try check(!controller.window!.isVisible && Prefs.soundMode == .off, "Closing does not change the selected mode")
+        app.showSoundOptions()
+        try check(app.soundOptions?.window === originalWindow && controller.window!.isVisible, "Closed window reopens")
         let other = root.items[5].submenu!
         try check(other.items.map(\.title) == [L("menu.caret"), L("menu.login")], "Other settings order")
         // Login registration is deliberately not triggered by automated tests.
-        print("PASS permission visibility, menu order, nested audio options, defaults, migration, mode routing, beat and volumes")
+        print("PASS permissions, menu order, independent sound options window, all controls, mode synchronization, persistence and reopening")
     }
 }
 
@@ -303,6 +297,11 @@ private func checkRipples() throws {
 struct MenuTestRunner {
     static func main() throws {
         setvbuf(stdout, nil, _IONBF, 0)
+        if CommandLine.arguments.contains("--neural-only") {
+            try checkNeuralModels()
+            try checkNeuralPlayback()
+            return
+        }
         if !CommandLine.arguments.contains("--audio-only") {
             _ = NSApplication.shared
             NSApp.setActivationPolicy(.accessory)
@@ -310,6 +309,8 @@ struct MenuTestRunner {
             try checkRipples()
         }
         if !CommandLine.arguments.contains("--visual-only") {
+            try checkNeuralModels()
+            try checkNeuralPlayback()
             try checkModernAudio()
             try checkAudioMix()
         }
