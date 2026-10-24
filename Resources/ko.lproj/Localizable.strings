@@ -1,0 +1,114 @@
+/* SparkFX Keyboard - 한국어 */
+
+"copyright" = "© 2026 leesop.com. 모든 권리 보유.";
+
+"menu.effect" = "시각 효과";
+"effect.large" = "크게";
+"effect.medium" = "크게";
+"effect.small" = "보통";
+"effect.off" = "없음";
+
+"menu.sound.item" = "%1$@: %2$@";
+"menu.sound.keyboard" = "키보드 소리";
+"menu.sound.mouse" = "마우스 소리";
+"menu.sound.choose" = "소리 선택…";
+"menu.sound.clear" = "소리 목록 삭제";
+"menu.sound.none" = "없음";
+"menu.sound.volume" = "볼륨";
+
+"menu.caret" = "정확한 커서 취득 시도";
+"menu.caret.item" = "%1$@: %2$@";
+"caret.off" = "꺼짐";
+"caret.auto" = "자동";
+"menu.ambient" = "앰비언트 설정";
+"menu.ambient.item" = "%1$@: %2$@";
+"menu.on" = "켜기";
+"menu.off" = "오프";
+"ambient.wind" = "바람 · 빗소리";
+"ambient.pad" = "따뜻한 패드";
+"ambient.loop" = "루프 파일…";
+"ambient.loopItem" = "루프: %@";
+"ambient.chimes" = "산사 풍경";
+"ambient.grains" = "알갱이";
+"ambient.pulseOff" = "박자 끄기";
+"ambient.pulseBPM" = "박자 %@";
+"ambient.level" = "음량 %@";
+"alert.loop.title" = "루프 파일을 읽지 못했습니다";
+"alert.loop.body" = "%@ 을(를) 열지 못했습니다. 오디오 파일(WAV, AIFF, MP3, M4A)을 써 보세요.";
+
+"menu.permission" = "앱 사용 권한 설정";
+"menu.permission.item" = "권한 필요 - %@";
+"permission.accessibility" = "손쉬운 접근 (커서 위치)";
+"permission.inputMonitoring" = "입력 모니터링 (키 입력)";
+"permission.accessibility.short" = "손쉬운 접근";
+"permission.inputMonitoring.short" = "입력 모니터링";
+"permission.openSettings" = "시스템 설정 열기";
+"permission.recheck" = "다시 확인";
+"permission.reveal" = "Finder에서 앱 보기";
+
+"menu.about" = "정보";
+"menu.quit" = "끝내기";
+
+"about.credits" = "키를 누르거나 마우스를 클릭할 때 그 자리에서 불꽃이나 물방울 효과가 나타나는 메뉴 막대 앱입니다.";
+
+"alert.permission.title" = "권한을 켜 주세요: %@";
+"alert.permission.body" = "키를 누른 자리에 불꽃을 터뜨리려면 두 가지가 필요합니다.\n\n· 손쉬운 접근 - 입력 커서의 위치를 알아내는 데 씁니다.\n· 입력 모니터링 - 키 입력을 관찰하는 데 씁니다.\n\n시스템 설정 > 개인정보 보호 및 보안에서 두 목록 모두에 SparkFX Keyboard가 켜져 있어야 합니다.\n목록에 SparkFX Keyboard가 없으면 + 단추로 build/SparkFX Keyboard.app을 직접 추가하세요.\n권한을 켠 뒤에는 앱을 다시 실행해야 합니다.\n\n언제든 메뉴 막대의 '앱 사용 권한 설정' 메뉴에서 다시 확인할 수 있습니다.\n마우스 클릭은 이 권한 없이도 동작합니다.";
+"alert.permission.openSettings" = "시스템 설정 열기";
+"alert.permission.later" = "나중에";
+
+"alert.granted.title" = "권한이 모두 켜져 있습니다";
+"alert.granted.body" = "키 입력이 아직 동작하지 않으면 앱을 다시 실행해 주세요.";
+"alert.granted.relaunch" = "앱 다시 실행";
+"alert.granted.later" = "나중에";
+
+"alert.sound.title" = "이 파일은 재생할 수 없습니다";
+"alert.sound.body" = "%@ 을(를) 읽지 못했습니다. 오디오 파일(WAV, AIFF, MP3, M4A)이나 Mechvibes 프로필(profile.yaml)을 써 보세요.";
+"alert.sound.ok" = "확인";
+
+"menu.audio" = "음향 설정";
+
+"sound.type" = "음향 종류";
+
+"sound.mode.off" = "없음";
+
+"sound.mode.ambient" = "앰비언트 모드";
+
+"sound.mode.custom" = "사운드 지정 모드";
+
+"sound.options" = "음향 옵션";
+
+"ambient.loopSettings" = "루프 효과";
+
+"ambient.keyEffects" = "키 효과";
+
+"ambient.beat" = "박자";
+
+"ambient.volume" = "음량";
+
+"menu.other" = "기타 설정";
+
+"menu.login" = "로그인시 자동 실행";
+
+"login.error" = "로그인 자동 실행 설정을 변경하지 못했습니다";
+
+"login.approval" = "시스템 설정에서 로그인을 허용해 주세요. 선택하면 설정을 엽니다.";
+
+"login.unsupported" = "로그인 자동 실행은 macOS 13 이상에서 사용할 수 있습니다.";
+
+"visual.type" = "효과 종류";
+
+"visual.size" = "효과 크기";
+
+"visual.kind.none" = "없음";
+
+"visual.kind.fireworks" = "불꽃";
+
+"visual.kind.ripple" = "물방울";
+
+"ambient.metal" = "메탈";
+
+"ambient.edm" = "EDM";
+
+"ambient.guitar" = "일렉기타";
+
+"ambient.electronic" = "전자음";

@@ -1,0 +1,17 @@
+# Generated output and local-only audio assets
+build/
+dist/
+*.zip
+.DS_Store
+**/[Pp][Rr][Oo][Ff][Ii][Ll][Ee][Ss]/
+*.[Ww][Aa][Vv]
+*.[Mm][Pp]3
+# Signing credentials and local settings
+*.p12
+*.pfx
+*.p8
+*.key
+.env
+.env.*
+.claude/
+.codex/

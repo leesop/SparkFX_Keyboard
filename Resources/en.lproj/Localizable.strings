@@ -1,0 +1,114 @@
+/* SparkFX Keyboard - English (base) */
+
+"copyright" = "© 2026 leesop.com. All rights reserved.";
+
+"menu.effect" = "Visual Effects";
+"effect.large" = "Large";
+"effect.medium" = "Large";
+"effect.small" = "Normal";
+"effect.off" = "None";
+
+"menu.sound.item" = "%1$@: %2$@";
+"menu.sound.keyboard" = "Keyboard Sound";
+"menu.sound.mouse" = "Mouse Sound";
+"menu.sound.choose" = "Choose Sound…";
+"menu.sound.clear" = "Clear Sound List";
+"menu.sound.none" = "None";
+"menu.sound.volume" = "Volume";
+
+"menu.caret" = "Try to Locate the Exact Caret";
+"menu.caret.item" = "%1$@: %2$@";
+"caret.off" = "Off";
+"caret.auto" = "Auto";
+"menu.ambient" = "Ambient Settings";
+"menu.ambient.item" = "%1$@: %2$@";
+"menu.on" = "On";
+"menu.off" = "Off";
+"ambient.wind" = "Wind & Rain";
+"ambient.pad" = "Warm Pad";
+"ambient.loop" = "Loop File…";
+"ambient.loopItem" = "Loop: %@";
+"ambient.chimes" = "Temple Chimes";
+"ambient.grains" = "Grains";
+"ambient.pulseOff" = "No Beat";
+"ambient.pulseBPM" = "Beat %@";
+"ambient.level" = "Level %@";
+"alert.loop.title" = "Could not read the loop file";
+"alert.loop.body" = "%@ could not be opened. Try an audio file (WAV, AIFF, MP3, M4A).";
+
+"menu.permission" = "App Permissions";
+"menu.permission.item" = "App Permissions - %@";
+"permission.accessibility" = "Accessibility (caret position)";
+"permission.inputMonitoring" = "Input Monitoring (keystrokes)";
+"permission.accessibility.short" = "Accessibility";
+"permission.inputMonitoring.short" = "Input Monitoring";
+"permission.openSettings" = "Open System Settings";
+"permission.recheck" = "Check Again";
+"permission.reveal" = "Show App in Finder";
+
+"menu.about" = "About";
+"menu.quit" = "Quit";
+
+"about.credits" = "A menu bar app that shows fireworks or water ripples where you type or click.";
+
+"alert.permission.title" = "Turn on: %@";
+"alert.permission.body" = "Two permissions are needed to set off fireworks where you type.\n\n· Accessibility - used to find the text caret.\n· Input Monitoring - used to observe keystrokes.\n\nIn System Settings > Privacy & Security, both lists must contain SparkFX Keyboard turned on.\nIf SparkFX Keyboard is not listed, add build/SparkFX Keyboard.app with the + button.\nRestart the app after turning them on.\n\nYou can check again any time from the \"App Permissions\" menu.\nMouse clicks work without these permissions.";
+"alert.permission.openSettings" = "Open System Settings";
+"alert.permission.later" = "Later";
+
+"alert.granted.title" = "All permissions are on";
+"alert.granted.body" = "If typing still does nothing, restart the app.";
+"alert.granted.relaunch" = "Relaunch App";
+"alert.granted.later" = "Later";
+
+"alert.sound.title" = "Could not play this file";
+"alert.sound.body" = "%@ could not be loaded. Try an audio file (WAV, AIFF, MP3, M4A) or a Mechvibes profile (profile.yaml).";
+"alert.sound.ok" = "OK";
+
+"menu.audio" = "Sound Settings";
+
+"sound.type" = "Sound Type";
+
+"sound.mode.off" = "None";
+
+"sound.mode.ambient" = "Ambient Mode";
+
+"sound.mode.custom" = "Custom Sound Mode";
+
+"sound.options" = "Sound Options";
+
+"ambient.loopSettings" = "Loop Effects";
+
+"ambient.keyEffects" = "Key Effects";
+
+"ambient.beat" = "Beat";
+
+"ambient.volume" = "Volume";
+
+"menu.other" = "Other Settings";
+
+"menu.login" = "Launch at Login";
+
+"login.error" = "Could not change launch at login";
+
+"login.approval" = "Allow this app in System Settings. Select to open settings.";
+
+"login.unsupported" = "Launch at login requires macOS 13 or later.";
+
+"visual.type" = "Effect Type";
+
+"visual.size" = "Effect Size";
+
+"visual.kind.none" = "None";
+
+"visual.kind.fireworks" = "Fireworks";
+
+"visual.kind.ripple" = "Water Droplets";
+
+"ambient.metal" = "Metal";
+
+"ambient.edm" = "EDM";
+
+"ambient.guitar" = "Electric Guitar";
+
+"ambient.electronic" = "Electronic Tones";
